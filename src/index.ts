@@ -7,8 +7,7 @@ import { buildSchema } from "type-graphql";
 import { PingResolver } from "./resolvers/ping";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-
-import redis from "redis";
+import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import { COOKIE_NAME, __prod__ } from "./constants";
@@ -16,9 +15,9 @@ import cors from "cors";
 
 const main = async () => {
 	const RedisStore = connectRedis(session);
-	const redisClient = redis.createClient();
+	const redis = new Redis();
 	const orm = await MikroORM.init(microConfig);
-	await orm.getMigrator().up();
+	// await orm.getMigrator().up();
 
 	const app = express();
 
@@ -35,7 +34,7 @@ const main = async () => {
 			resave: false,
 			saveUninitialized: false,
 			store: new RedisStore({
-				client: redisClient,
+				client: redis,
 				disableTouch: true,
 			}),
 			cookie: {
@@ -52,7 +51,7 @@ const main = async () => {
 			resolvers: [PingResolver, PostResolver, UserResolver],
 			validate: false,
 		}),
-		context: ({ req, res }) => ({ em: orm.em, req, res }),
+		context: ({ req, res }) => ({ em: orm.em, req, res, redis }),
 	});
 
 	apolloServer.applyMiddleware({ app, cors: false });
