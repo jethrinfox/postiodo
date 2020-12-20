@@ -1,5 +1,4 @@
-import { MyContext } from "src/types";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "../entities/Post";
 
 @Resolver()
@@ -26,10 +25,12 @@ export class PostResolver {
 	): Promise<Post | null> {
 		if (typeof id !== undefined) {
 			if (typeof title !== undefined) {
-				const post = await Post.update(id, { title });
+				const post = await Post.findOne(id);
 				if (!post) {
 					return null;
 				}
+				post.title = title;
+				await Post.save(post);
 				return post;
 			}
 			return null;
