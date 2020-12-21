@@ -15,7 +15,6 @@ import { UsernamePasswordInput } from "./UsernamePasswordInput";
 import { validateRegister } from "../utils/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 import { v4 } from "uuid";
-import { getConnection } from "typeorm";
 
 @ObjectType()
 class FieldError {
@@ -48,38 +47,49 @@ export class UserResolver {
 		// Hash password
 		const hashedPassword = await argon2.hash(password);
 
-		let user;
 		try {
-			const result = await getConnection()
-				.createQueryBuilder()
-				.insert()
-				.into(User)
-				.values({
-					email,
-					username,
-					password: hashedPassword,
-				})
-				.returning("*")
-				.execute();
+			const user = await User.create({
+				email,
+				username,
+				password: hashedPassword,
+			}).save();
 
-			user = result.raw[0];
+			req.session.userId = user.id;
+
+			return { user };
 		} catch (error) {
 			// duplicate username error
 			if (error.code === "23505") {
-				return {
-					errors: [
-						{
-							field: "username",
-							message: "username already exists",
-						},
-					],
-				};
+				if (error.detail.includes("email")) {
+					return {
+						errors: [
+							{
+								field: "email",
+								message: "email already exists",
+							},
+						],
+					};
+				}
+				if (error.detail.includes("username")) {
+					return {
+						errors: [
+							{
+								field: "username",
+								message: "username already exists",
+							},
+						],
+					};
+				}
 			}
+			return {
+				errors: [
+					{
+						field: "username",
+						message: "server error - try again later",
+					},
+				],
+			};
 		}
-
-		req.session.userId = user.id;
-
-		return { user };
 	}
 
 	@Mutation(() => UserResponse)
@@ -226,6 +236,12 @@ export class UserResolver {
 			`<a href="http://localhost:3000/change-password/${token}">reset password</a>`
 		);
 
+		return true;
+	}
+
+	@Mutation(() => Boolean)
+	async deleteAllPost(): Promise<boolean> {
+		await User.delete({});
 		return true;
 	}
 }

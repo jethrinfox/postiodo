@@ -1,24 +1,64 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import {
+	Arg,
+	Ctx,
+	Field,
+	InputType,
+	Mutation,
+	Query,
+	Resolver,
+	UseMiddleware,
+} from "type-graphql";
+import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
+import { isAuth } from "../middleware/isAuth";
+import { MyContext } from "../types";
+
+@InputType()
+class PostInput {
+	@Field()
+	title: string;
+	@Field()
+	text: string;
+}
 
 @Resolver()
 export class PostResolver {
 	@Query(() => [Post])
-	posts(): Promise<Post[]> {
-		return Post.find();
+	async posts(
+		@Arg("limit") limit: number,
+		@Arg("cursor", () => String, { nullable: true }) cursor: string | null
+	): Promise<Post[]> {
+		const realLimit = Math.min(25, limit);
+		const qb = getConnection()
+			.getRepository(Post)
+			.createQueryBuilder("p")
+			.orderBy('"createdAt"', "DESC")
+			.take(realLimit);
+		if (cursor) {
+			qb.where('"createdAt" < :cursor', { cursor: parseInt(cursor) });
+		}
+		return qb.getMany();
 	}
 
 	@Query(() => Post, { nullable: true })
-	post(@Arg("id") id: number): Promise<Post | undefined> {
-		return Post.findOne(id);
+	async post(@Arg("id") id: number): Promise<Post | undefined> {
+		return await Post.findOne(id);
 	}
 
 	@Mutation(() => Post)
-	createPost(@Arg("title") title: string): Promise<Post> {
-		return Post.create({ title }).save();
+	@UseMiddleware(isAuth)
+	async createPost(
+		@Arg("input") input: PostInput,
+		@Ctx() { req }: MyContext
+	): Promise<Post> {
+		return await Post.create({
+			...input,
+			creatorId: req.session.userId,
+		}).save();
 	}
 
 	@Mutation(() => Post, { nullable: true })
+	@UseMiddleware(isAuth)
 	async updatePost(
 		@Arg("id") id: number,
 		@Arg("title", () => String, { nullable: true }) title: string
@@ -39,8 +79,16 @@ export class PostResolver {
 	}
 
 	@Mutation(() => Boolean)
+	@UseMiddleware(isAuth)
 	async deletePost(@Arg("id") id: number): Promise<boolean> {
 		await Post.delete(id);
+		return true;
+	}
+
+	@Mutation(() => Boolean)
+	@UseMiddleware(isAuth)
+	async deleteAllPost(): Promise<boolean> {
+		await Post.delete({});
 		return true;
 	}
 }
