@@ -18,7 +18,7 @@ import path from "path";
 const main = async () => {
 	const conn = await createConnection({
 		type: "postgres",
-		database: "lireddit",
+		database: "postiodo",
 		username: "postgres",
 		password: "12345678",
 		synchronize: true,
