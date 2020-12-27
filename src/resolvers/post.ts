@@ -2,10 +2,13 @@ import {
 	Arg,
 	Ctx,
 	Field,
+	FieldResolver,
 	InputType,
+	Int,
 	Mutation,
 	Query,
 	Resolver,
+	Root,
 	UseMiddleware,
 } from "type-graphql";
 import { getConnection } from "typeorm";
@@ -21,11 +24,20 @@ class PostInput {
 	text: string;
 }
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver {
+	@FieldResolver(() => String)
+	textSnippet(@Root() root: Post) {
+		const maxChar = 100;
+		if (root.text.length > maxChar) {
+			root.text = root.text.substring(0, maxChar) + " . . .";
+		}
+		return root.text;
+	}
+
 	@Query(() => [Post])
 	async posts(
-		@Arg("limit") limit: number,
+		@Arg("limit", () => Int) limit: number,
 		@Arg("cursor", () => String, { nullable: true }) cursor: string | null
 	): Promise<Post[]> {
 		const realLimit = Math.min(25, limit);
@@ -35,13 +47,15 @@ export class PostResolver {
 			.orderBy('"createdAt"', "DESC")
 			.take(realLimit);
 		if (cursor) {
-			qb.where('"createdAt" < :cursor', { cursor: parseInt(cursor) });
+			qb.where('"createdAt" < :cursor', {
+				cursor: new Date(parseInt(cursor)),
+			});
 		}
 		return qb.getMany();
 	}
 
 	@Query(() => Post, { nullable: true })
-	async post(@Arg("id") id: number): Promise<Post | undefined> {
+	async post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
 		return await Post.findOne(id);
 	}
 
@@ -60,7 +74,7 @@ export class PostResolver {
 	@Mutation(() => Post, { nullable: true })
 	@UseMiddleware(isAuth)
 	async updatePost(
-		@Arg("id") id: number,
+		@Arg("id", () => Int) id: number,
 		@Arg("title", () => String, { nullable: true }) title: string
 	): Promise<Post | null> {
 		if (typeof id !== undefined) {
@@ -80,7 +94,7 @@ export class PostResolver {
 
 	@Mutation(() => Boolean)
 	@UseMiddleware(isAuth)
-	async deletePost(@Arg("id") id: number): Promise<boolean> {
+	async deletePost(@Arg("id", () => Int) id: number): Promise<boolean> {
 		await Post.delete(id);
 		return true;
 	}
