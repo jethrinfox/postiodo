@@ -28,7 +28,7 @@ const main = async () => {
 	});
 
 	// await Post.delete({});
-	conn.runMigrations();
+	// conn.runMigrations();
 
 	const RedisStore = connectRedis(session);
 	const redis = new Redis();
