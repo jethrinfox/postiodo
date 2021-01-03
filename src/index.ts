@@ -14,19 +14,21 @@ import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
 import path from "path";
+import { Vote } from "./entities/Vote";
 
 const main = async () => {
-	const conn = await createConnection({
+	await createConnection({
 		type: "postgres",
 		database: "postiodo",
 		username: "postgres",
 		password: "12345678",
 		synchronize: true,
 		logging: true,
-		entities: [Post, User],
+		entities: [Post, User, Vote],
 		migrations: [path.join(__dirname, "./migrations/*")],
 	});
 
+	// await Vote.delete({});
 	// await Post.delete({});
 	// conn.runMigrations();
 
