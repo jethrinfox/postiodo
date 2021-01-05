@@ -17,7 +17,7 @@ import path from "path";
 import { Vote } from "./entities/Vote";
 
 const main = async () => {
-	await createConnection({
+	const conn = await createConnection({
 		type: "postgres",
 		database: "postiodo",
 		username: "postgres",
@@ -30,6 +30,7 @@ const main = async () => {
 
 	// await Vote.delete({});
 	// await Post.delete({});
+	// await User.delete({});
 	// conn.runMigrations();
 
 	const RedisStore = connectRedis(session);

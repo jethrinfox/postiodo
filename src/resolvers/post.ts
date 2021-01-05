@@ -114,10 +114,15 @@ export class PostResolver {
 		const realLimit = Math.min(50, limit);
 		const realLimitPlusOne = realLimit + 1;
 
-		const replacements: any[] = [realLimitPlusOne, req.session.userId];
+		const replacements: any[] = [realLimitPlusOne];
 
+		if (req.session.userId) {
+			replacements.push(req.session.userId);
+		}
+		let cursorIdx = 3;
 		if (cursor) {
 			replacements.push(new Date(parseInt(cursor)));
+			cursorIdx = replacements.length;
 		}
 
 		const posts = await getConnection().query(
@@ -137,27 +142,12 @@ export class PostResolver {
 			}
 			from post p
 			inner join public.user u on u.id = p."creatorId"
-			${cursor ? `where p."createdAt" < $3` : ""}
+			${cursor ? `where p."createdAt" < $${cursorIdx}` : ""}
 			order by p."createdAt" DESC
 			limit $1
 		`,
 			replacements
 		);
-
-		// const qb = getConnection()
-		// 	.getRepository(Post)
-		// 	.createQueryBuilder("p")
-		// 	.innerJoinAndSelect("p.creator", "u", 'u.id = p."creatorId"')
-		// 	.orderBy('p."createdAt"', "DESC")
-		// 	.take(realLimitPlusOne);
-		// if (cursor) {
-		// 	qb.where('p."createdAt" < :cursor', {
-		// 		cursor: new Date(parseInt(cursor)),
-		// 	});
-		// }
-
-		// const posts = await qb.getMany();
-
 		return {
 			posts: posts.slice(0, realLimit),
 			hasMore: posts.length === realLimitPlusOne,
@@ -166,7 +156,7 @@ export class PostResolver {
 
 	@Query(() => Post, { nullable: true })
 	async post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
-		return await Post.findOne(id);
+		return await Post.findOne(id, { relations: ["creator"] });
 	}
 
 	@Mutation(() => Post)
@@ -204,15 +194,11 @@ export class PostResolver {
 
 	@Mutation(() => Boolean)
 	@UseMiddleware(isAuth)
-	async deletePost(@Arg("id", () => Int) id: number): Promise<boolean> {
-		await Post.delete(id);
-		return true;
-	}
-
-	@Mutation(() => Boolean)
-	@UseMiddleware(isAuth)
-	async deleteAllPost(): Promise<boolean> {
-		await Post.delete({});
+	async deletePost(
+		@Arg("id", () => Int) id: number,
+		@Ctx() { req }: MyContext
+	): Promise<boolean> {
+		await Post.delete({ id, creatorId: req.session.userId });
 		return true;
 	}
 }
