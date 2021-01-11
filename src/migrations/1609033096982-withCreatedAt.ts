@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class withCreatedAt1609033096982 implements MigrationInterface {
-	public async up(queryRunner: QueryRunner): Promise<void> {
-		queryRunner.query(`
+	public async up(_queryRunner: QueryRunner): Promise<void> {
+		/* queryRunner.query(`
         insert into post (title, text, "creatorId", "createdAt") values ('Pharaoh''s Curse', 'accumsan tortor quis turpis sed ante vivamus tortor duis mattis egestas metus aenean fermentum donec ut mauris eget massa tempor convallis nulla', 1, '2020-02-09T08:49:47Z');
 insert into post (title, text, "creatorId", "createdAt") values ('Raiders of Atlantis, The', 'augue aliquam erat volutpat in congue etiam justo etiam pretium iaculis justo in hac habitasse platea dictumst etiam faucibus cursus urna ut tellus nulla ut erat id mauris vulputate elementum nullam varius nulla facilisi cras', 1, '2020-02-04T16:15:12Z');
 insert into post (title, text, "creatorId", "createdAt") values ('Case Against 8, The', 'ante vel ipsum praesent blandit lacinia erat vestibulum sed magna at nunc commodo placerat praesent blandit nam nulla integer pede justo lacinia eget tincidunt', 1, '2020-02-27T21:15:34Z');
@@ -104,7 +104,7 @@ insert into post (title, text, "creatorId", "createdAt") values ('Young Doctors 
 insert into post (title, text, "creatorId", "createdAt") values ('Woman Rebels, A (Portrait of a Rebel)', 'magna at nunc commodo placerat praesent blandit nam nulla integer pede justo lacinia eget tincidunt eget tempus vel', 1, '2020-12-20T19:31:34Z');
 insert into post (title, text, "creatorId", "createdAt") values ('Yuva', 'id justo sit amet sapien dignissim vestibulum vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae nulla dapibus dolor vel est donec odio justo sollicitudin ut suscipit a feugiat et eros vestibulum ac est lacinia nisi venenatis tristique fusce congue diam id ornare', 1, '2020-07-23T17:27:17Z');
 
-        `);
+        `); */
 	}
 
 	public async down(_: QueryRunner): Promise<void> {}
