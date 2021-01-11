@@ -23,19 +23,20 @@ const main = async () => {
 	const conn = await createConnection({
 		type: "postgres",
 		url: process.env.DATABASE_URL,
-		synchronize: true,
+		// synchronize: true,
 		logging: true,
 		entities: [Post, User, Vote],
 		migrations: [path.join(__dirname, "./migrations/*")],
 	});
 
-	conn.runMigrations();
+	await conn.runMigrations();
 
 	const RedisStore = connectRedis(session);
 	const redis = new Redis(process.env.REDIS_URL);
 
 	const app = express();
 
+	app.set("trust proxy", 1);
 	app.use(
 		cors({
 			origin: process.env.CORS_ORIGIN,

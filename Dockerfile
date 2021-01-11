@@ -4,9 +4,7 @@ FROM node:14.15.4
 WORKDIR /usr/src/app
 
 # Install app dependencies
-COPY package.json ./
-
-COPY yarn.lock ./
+COPY package.json yarn.lock ./
 
 RUN yarn
 
@@ -22,6 +20,6 @@ ENV NODE_ENV=production
 
 EXPOSE 8080
 
-CMD [ "node", "/dist/index.js" ]
+CMD [ "node", "dist/index.js" ]
 
 USER node
