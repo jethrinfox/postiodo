@@ -23,7 +23,7 @@ const main = async () => {
 	const conn = await createConnection({
 		type: "postgres",
 		url: process.env.DATABASE_URL,
-		// synchronize: true,
+		synchronize: __prod__,
 		logging: true,
 		entities: [Post, User, Vote],
 		migrations: [path.join(__dirname, "./migrations/*")],
